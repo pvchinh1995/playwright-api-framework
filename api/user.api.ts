@@ -1,4 +1,5 @@
 import { BaseApi } from "./base.api";
+import { RequestOptions } from "../types/request-options";
 
 export interface CreateUserRequest {
     firstName: string;
@@ -14,39 +15,45 @@ export interface UpdateUserRequest {
 export class UserApi extends BaseApi{
 
     private endpoint = "/users";
+    private authEndpoint = "/auth";
 
-    async getUser(id: number) {
-        return this.get(`${this.endpoint}/${id}`);
+    async getUser(id: number, options?: RequestOptions) {
+    return this.get(`${this.endpoint}/${id}`, options);
     }
 
-    async getUsers() {
-        return this.get(this.endpoint);
+    async getUsers(options?: RequestOptions) {
+    return this.get(this.endpoint, options);
     }
 
-    async searchUser(keyword: string) {
-
-        return await this.get(`${this.endpoint}/search`, {
-            params: {
-                q: keyword
-            }
-        });
+    async searchUser(keyword: string, options?: RequestOptions) {
+    return this.get(`${this.endpoint}/search`, {
+        params: {
+            q: keyword
+        },
+        ...options
+    });
     }
 
-    async createUser(data: CreateUserRequest) {
+    async createUser(data: CreateUserRequest, options?: RequestOptions) {
     return this.post(`${this.endpoint}/add`, {
-        data
+        data,
+        ...options
     });
     }
 
-    async updateUser(id: number, data: UpdateUserRequest) {
+    async updateUser(id: number, data: UpdateUserRequest, options?: RequestOptions) {
     return this.patch(`${this.endpoint}/${id}`, {
-        data
+        data,
+        ...options
     });
     }
 
-    async deleteUser(id: number) {
-    return this.delete(`${this.endpoint}/${id}`, {
-    });
+    async deleteUser(id: number, options?: RequestOptions) {
+    return this.delete(`${this.endpoint}/${id}`, options);
+    }
+
+    async getCurrentUser(options?: RequestOptions) {
+        return this.get(`${this.authEndpoint}/me`, options);
     }
 
 }

@@ -6,89 +6,81 @@ import config from "../config/env";
 export class BaseApi {
   constructor(protected request: APIRequestContext) {}
 
-  async get(url: string, options?: RequestOptions) {
+  private buildRequestOptions(options?: RequestOptions) {
+    const { auth, ...requestOptions } = options ?? {};
+
     const headers = {
-      ...(options?.headers ?? {}),
+        ...(requestOptions.headers ?? {}),
     };
 
-    const token = TokenManager.getAccessToken();
+    // Tìm Authorization Header, không phân biệt chữ hoa/thường
+    const authorizationKeys = Object.keys(headers).filter(
+        key => key.toLowerCase() === "authorization"
+    );
 
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    if (auth === false) {
+        // Không sử dụng Authorization Header
+        authorizationKeys.forEach(key => delete headers[key]);
+
+    } else if (auth === true) {
+        // Bắt buộc sử dụng token từ TokenManager
+        authorizationKeys.forEach(key => delete headers[key]);
+
+        const token = TokenManager.getAccessToken();
+
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+    } else {
+        // Mặc định: ưu tiên Authorization Header thủ công
+        if (authorizationKeys.length === 0) {
+            const token = TokenManager.getAccessToken();
+
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+        }
     }
 
-    return this.request.get(`${config.baseUrl}${url}`, {
-      ...options,
-      headers,
-    });
+    return {
+        ...requestOptions,
+        headers
+    };
+}
+
+ async get(url: string, options?: RequestOptions) {
+    return this.request.get(
+      `${config.baseUrl}${url}`,
+      this.buildRequestOptions(options)
+    );
   }
 
   async post(url: string, options?: RequestOptions) {
-    const headers = {
-      ...(options?.headers ?? {}),
-    };
-
-    const token = TokenManager.getAccessToken();
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    return this.request.post(`${config.baseUrl}${url}`, {
-      ...options,
-      headers,
-    });
+    return this.request.post(
+      `${config.baseUrl}${url}`,
+      this.buildRequestOptions(options)
+    );
   }
 
   async put(url: string, options?: RequestOptions) {
-    const headers = {
-      ...(options?.headers ?? {}),
-    };
-
-    const token = TokenManager.getAccessToken();
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    return this.request.put(`${config.baseUrl}${url}`, {
-      ...options,
-      headers,
-    });
-  }
-
-  async delete(url: string, options?: RequestOptions) {
-    const headers = {
-      ...(options?.headers ?? {}),
-    };
-
-    const token = TokenManager.getAccessToken();
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    return this.request.delete(`${config.baseUrl}${url}`, {
-      ...options,
-      headers,
-    });
+    return this.request.put(
+      `${config.baseUrl}${url}`,
+      this.buildRequestOptions(options)
+    );
   }
 
   async patch(url: string, options?: RequestOptions) {
+    return this.request.patch(
+      `${config.baseUrl}${url}`,
+      this.buildRequestOptions(options)
+    );
+  }
 
-    const headers = {
-      ...(options?.headers ?? {}),
-    };
-
-    const token = TokenManager.getAccessToken();
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    return this.request.patch(`${config.baseUrl}${url}`, {
-      ...options,
-      headers,
-    });
+  async delete(url: string, options?: RequestOptions) {
+    return this.request.delete(
+      `${config.baseUrl}${url}`,
+      this.buildRequestOptions(options)
+    );
   }
 }
